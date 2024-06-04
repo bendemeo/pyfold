@@ -7,7 +7,8 @@ color_dict = {
     'mountain':'red',
     'valley':'blue',
     'reference':'lightgrey',
-    'crease':'black'
+    'crease':'darkgrey',
+    'boundary':'black'
 }
 
 def plot_pattern(pattern, width=800, height=800, path=None, linewidth=1.):
