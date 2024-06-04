@@ -84,7 +84,7 @@ def dfs_visit(vertex, visited, adjacency_dict):
 #                 queue.append(adjacent_vertex)  # Enqueue for BFS
 
 
-def solve_graft(pattern, min_distance=1.):
+def solve_graft(pattern, min_distance=1., target_distances=None):
 
     constraint_matrices = []
 
@@ -114,14 +114,21 @@ def solve_graft(pattern, min_distance=1.):
         constraint_matrices.append(new_constraint)
     
     constraint_matrix = np.vstack(constraint_matrices)
-    print(constraint_matrix.shape)
-    print(constraint_matrix)
+    print('constraint matrix nullspace has rank {}'.format(constraint_matrix.shape[1]-np.linalg.matrix_rank(constraint_matrix)))
+    print('there are {} boundary lines'.format(len([l for l in pattern.lines if l.boundary])))
+
     
     #now solve it subject to nonzero distances, trying to keep it uniform.
-    print('solving...')
     x = cp.Variable(len(pattern.lines))
-    objective = cp.Minimize(sum([cp.abs(x[i]-min_distance)**2 for i in range(len(pattern.lines))]))
-    constraints = [constraint_matrix @ x == np.zeros(constraint_matrix.shape[0]), x >= min_distance]
+    if target_distances is not None:
+        print('solving to target...')
+        objective = cp.Minimize(sum([cp.abs(x[i]-target_distances[i])**2 for i in range(len(pattern.lines))]))
+        min_distance = np.min(target_distances)/2. # don't go below half the lowest dist
+        constraints = [constraint_matrix @ x == np.zeros(constraint_matrix.shape[0]), x >= min_distance]
+    else:
+        print("solving constant...")
+        objective = cp.Minimize(sum([cp.abs(x[i]-min_distance)**2 for i in range(len(pattern.lines))]))
+        constraints = [constraint_matrix @ x == np.zeros(constraint_matrix.shape[0]), x >= min_distance]
     prob = cp.Problem(objective, constraints)
     prob.solve(solver=cp.ECOS)
     
